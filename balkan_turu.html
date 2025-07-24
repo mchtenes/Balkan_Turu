@@ -1,0 +1,430 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Balkan Turu Haritası</title>
+    <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+    <style>
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .container {
+            height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            text-align: center;
+            box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+        }
+        
+        .header h1 {
+            margin: 0;
+            color: #2c3e50;
+            font-size: 2.2em;
+            font-weight: 600;
+        }
+        
+        .header p {
+            margin: 10px 0 0 0;
+            color: #7f8c8d;
+            font-size: 1.1em;
+        }
+        
+        .map-container {
+            flex: 1;
+            position: relative;
+        }
+        
+        #map {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .legend {
+            position: absolute;
+            top: 20px;
+            right: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            border-radius: 15px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+            z-index: 1000;
+            min-width: 200px;
+        }
+        
+        .legend h3 {
+            margin: 0 0 15px 0;
+            color: #2c3e50;
+            font-size: 1.2em;
+            text-align: center;
+        }
+        
+        .legend-item {
+            display: flex;
+            align-items: center;
+            margin: 8px 0;
+            font-size: 0.9em;
+        }
+        
+        .legend-color {
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            margin-right: 10px;
+            border: 2px solid #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .custom-popup {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        .custom-popup h4 {
+            margin: 0 0 8px 0;
+            color: #2c3e50;
+            font-size: 1.1em;
+        }
+        
+        .custom-popup p {
+            margin: 4px 0;
+            color: #7f8c8d;
+            font-size: 0.9em;
+        }
+        
+        .route-info {
+            position: absolute;
+            bottom: 20px;
+            left: 20px;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 15px;
+            border-radius: 10px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            z-index: 1000;
+        }
+        
+        .route-info h4 {
+            margin: 0 0 10px 0;
+            color: #2c3e50;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🗺️ Balkan Turu Haritası</h1>
+            <p>8 Günlük Unutulmaz Yolculuk - İstanbul'dan Balkanlara</p>
+        </div>
+        
+        <div class="map-container">
+            <div id="map"></div>
+            
+            <div class="legend">
+                <h3>📅 Günlük Program</h3>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #e74c3c;"></div>
+                    <span>1. Gün</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #f39c12;"></div>
+                    <span>2. Gün</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #f1c40f;"></div>
+                    <span>3. Gün</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #2ecc71;"></div>
+                    <span>4. Gün</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #3498db;"></div>
+                    <span>5. Gün</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #9b59b6;"></div>
+                    <span>6. Gün</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #e67e22;"></div>
+                    <span>7. Gün</span>
+                </div>
+                <div class="legend-item">
+                    <div class="legend-color" style="background-color: #34495e;"></div>
+                    <span>8. Gün</span>
+                </div>
+            </div>
+            
+            <div class="route-info">
+                <h4>🚗 Rota Bilgisi</h4>
+                <p><strong>Toplam Süre:</strong> 8 Gün</p>
+                <p><strong>Ülkeler:</strong> Türkiye, Sırbistan, Bosna-Hersek, Karadağ, Arnavutluk, Kuzey Makedonya, Kosova</p>
+                <p><strong>Başlangıç/Bitiş:</strong> İstanbul</p>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+    <script>
+        // Tur noktaları
+        const tourPoints = [
+            {name: "İstanbul", day: "1. Gün", coords: [41.0882, 28.9584], country: "🇹🇷 Türkiye", description: "Başlangıç noktası"},
+            {name: "Belgrad", day: "1. Gün", coords: [44.7866, 20.4489], country: "🇷🇸 Sırbistan", description: "Tuna ve Sava nehirlerinin birleştiği yer - Bayraklı Camii - Aziz Mihail Katedrali - Aziz Sava Katedrali - Belgrad Kalesi"},
+            {name: "Saraybosna", day: "2. Gün", coords: [43.8563, 18.4131], country: "🇧🇦 Bosna-Hersek", description: "Aliya İzzetbegoviç - Gazi Hüsrev Bey Camii"},
+            {name: "Ahmici", day: "3. Gün", coords: [44.1558, 17.8997], country: "🇧🇦 Bosna-Hersek", description: "92 Savaşından 116 Şehit"},
+            {name: "Travnik", day: "3. Gün", coords: [44.2264, 17.6658], country: "🇧🇦 Bosna-Hersek", description: "Selami Yurdan - Alaca Cami"},
+            {name: "Konjic", day: "4. Gün", coords: [43.6540, 17.9608], country: "🇧🇦 Bosna-Hersek", description: "Neretva nehri kıyısında tarihi köprü şehri"},
+            {name: "Blagaj", day: "4. Gün", coords: [43.2573, 17.8865], country: "🇧🇦 Bosna-Hersek", description: "Buna nehri kaynağındaki Blagaj Alperenler tekkesi"},
+            {name: "Mostar", day: "4. Gün", coords: [43.3438, 17.8078], country: "🇧🇦 Bosna-Hersek", description: "UNESCO Dünya Mirası Mostar Köprüsü - Karagözbey Camii - Koski Mehmed Paşa Camii"},
+            {name: "Kotor", day: "5. Gün", coords: [42.4247, 18.7712], country: "🇲🇪 Karadağ", description: "Adriyatik kıyısında ortaçağ şehri"},
+            {name: "Lezhe", day: "5. Gün", coords: [41.7836, 19.6437], country: "🇦🇱 Arnavutluk", description: "Skenderbeg'in mezarının bulunduğu tarihi şehir"},
+            {name: "Tiran", day: "6. Gün", coords: [41.3275, 19.8189], country: "🇦🇱 Arnavutluk", description: "Hacı Ethem Bey Camii"},
+            {name: "Ohri", day: "6. Gün", coords: [41.1171, 20.8016], country: "🇲🇰 Kuzey Makedonya", description: "Ohri İncisi - Ali Paşa Camii"},
+            {name: "Kalkandelen", day: "7. Gün", coords: [41.9990, 20.9717], country: "🇲🇰 Kuzey Makedonya", description: "Harabati Baba Tekkesi - Alaca Camii"},
+            {name: "Matka Kanyonu", day: "7. Gün", coords: [41.9400, 21.2600], country: "🇲🇰 Kuzey Makedonya", description: "Doğal güzellik - kanyon ve göl"},
+            {name: "Üsküp", day: "7. Gün", coords: [41.9981, 21.4254], country: "🇲🇰 Kuzey Makedonya", description: "Murat Paşa Camii - Taşköprü"},
+            {name: "Prizren", day: "7. Gece", coords: [42.2139, 20.7397], country: "🇽🇰 Kosova", description: "Sinan Paşa Camii - Emin Paşa Camii - Davud Hoca"},
+            {name: "Priştine", day: "8. Gün", coords: [42.6629, 21.1655], country: "🇽🇰 Kosova", description: "Fatih Sultan Mehmet Camii - Sultan Murad Cami"},
+            {name: "İstanbul", day: "8. Gece", coords: [41.0082, 28.9204], country: "🇹🇷 Türkiye", description: "Dönüş - Unutulmaz anılarla eve"}
+        ];
+
+        // Günlere göre renkler
+        const dayColors = {
+            "1. Gün": "#e74c3c",
+            "2. Gün": "#f39c12", 
+            "3. Gün": "#f1c40f",
+            "4. Gün": "#2ecc71",
+            "5. Gün": "#3498db",
+            "6. Gün": "#9b59b6",
+            "7. Gün": "#e67e22",
+            "7. Gece": "#e67e22",
+            "8. Gün": "#34495e",
+            "8. Gece": "#34495e"
+        };
+
+        // Haritayı başlat
+        const map = L.map('map').setView([43.5, 20.5], 6);
+
+        // Harita katmanı
+        L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+            attribution: '© OpenStreetMap contributors',
+            maxZoom: 18
+        }).addTo(map);
+
+        // Noktaları haritaya ekle
+        const markers = [];
+        tourPoints.forEach((point, index) => {
+            const color = dayColors[point.day];
+            
+            // Özel marker ikonu oluştur
+            const customIcon = L.divIcon({
+                className: 'custom-marker',
+                html: `<div style="
+                    background-color: ${color};
+                    width: 25px;
+                    height: 25px;
+                    border-radius: 50%;
+                    border: 3px solid white;
+                    box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+                    display: flex;
+                    align-items: center;
+                    justify-content: center;
+                    color: white;
+                    font-weight: bold;
+                    font-size: 12px;
+                ">${index + 1}</div>`,
+                iconSize: [25, 25],
+                iconAnchor: [12, 12],
+                popupAnchor: [0, -12]
+            });
+
+            const marker = L.marker(point.coords, {icon: customIcon}).addTo(map);
+            
+            // Popup içeriği
+            const popupContent = `
+                <div class="custom-popup">
+                    <h4>${point.name}</h4>
+                    <p><strong>📅 ${point.day}</strong></p>
+                    <p><strong>${point.country}</strong></p>
+                    <p>${point.description}</p>
+                    <p><small>📍 ${point.coords[0].toFixed(4)}, ${point.coords[1].toFixed(4)}</small></p>
+                </div>
+            `;
+            
+            marker.bindPopup(popupContent);
+            markers.push(marker);
+        });
+
+        // Gerçek otoyol rotalarını çizmek için OpenRouteService kullan
+        async function drawRealRoutes() {
+            // Rotalar arası bağlantıları tanımla
+            const routeConnections = [];
+            
+            // Ardışık şehirler arasındaki bağlantıları oluştur
+            for (let i = 0; i < tourPoints.length - 1; i++) {
+                const from = tourPoints[i];
+                const to = tourPoints[i + 1];
+                
+                // İstanbul-Belgrad ve Priştine-İstanbul uçak yolu olarak işaretle
+                const isFlightRoute = (i === 0) || (i === tourPoints.length - 2);
+                
+                routeConnections.push({
+                    from: from,
+                    to: to,
+                    day: to.day,
+                    isFlight: isFlightRoute
+                });
+            }
+            
+            // Her bağlantı için rota çiz
+            for (const connection of routeConnections) {
+                if (connection.isFlight) {
+                    // Uçak yolu - düz kesikli çizgi
+                    L.polyline([connection.from.coords, connection.to.coords], {
+                        color: '#2c3e50',
+                        weight: 3,
+                        opacity: 0.8,
+                        dashArray: '10, 10'
+                    }).addTo(map);
+                } else {
+                    // Kara yolu - gerçek otoyol rotası al
+                    try {
+                        const route = await getRoute(connection.from.coords, connection.to.coords);
+                        if (route && route.length > 0) {
+                            // Otoyol stili çiz
+                            drawHighwayStyle(route, dayColors[connection.day]);
+                        } else {
+                            // Rota alınamazsa düz çizgi çiz
+                            drawHighwayStyle([connection.from.coords, connection.to.coords], dayColors[connection.day]);
+                        }
+                    } catch (error) {
+                        console.log('Rota alınamadı, düz çizgi çiziliyor:', error);
+                        drawHighwayStyle([connection.from.coords, connection.to.coords], dayColors[connection.day]);
+                    }
+                }
+            }
+        }
+        
+        // OpenRouteService API'den rota al
+        async function getRoute(start, end) {
+            try {
+                // Ücretsiz OSRM servisi kullan (OpenRouteService yerine)
+                const url = `https://router.project-osrm.org/route/v1/driving/${start[1]},${start[0]};${end[1]},${end[0]}?overview=full&geometries=geojson`;
+                
+                const response = await fetch(url);
+                const data = await response.json();
+                
+                if (data.routes && data.routes[0] && data.routes[0].geometry) {
+                    // GeoJSON koordinatlarını Leaflet formatına çevir
+                    return data.routes[0].geometry.coordinates.map(coord => [coord[1], coord[0]]);
+                }
+                return null;
+            } catch (error) {
+                console.log('OSRM servisi hatası:', error);
+                return null;
+            }
+        }
+        
+        // Otoyol stili çizim fonksiyonu
+        function drawHighwayStyle(coords, color) {
+            // Alt katman (geniş, koyu) - otoyol kenarları
+            L.polyline(coords, {
+                color: '#2c3e50',
+                weight: 8,
+                opacity: 0.8,
+                lineCap: 'round',
+                lineJoin: 'round'
+            }).addTo(map);
+            
+            // Üst katman (ince, renkli) - ana yol
+            L.polyline(coords, {
+                color: color,
+                weight: 4,
+                opacity: 0.9,
+                lineCap: 'round',
+                lineJoin: 'round'
+            }).addTo(map);
+            
+            // Orta şerit (beyaz kesikli)
+            L.polyline(coords, {
+                color: '#ffffff',
+                weight: 1,
+                opacity: 0.8,
+                dashArray: '15, 10',
+                lineCap: 'round'
+            }).addTo(map);
+        }
+        
+        // Rotaları çiz
+        drawRealRoutes();
+
+        // Haritayı tüm noktaları gösterecek şekilde ayarla
+        const group = new L.featureGroup(markers);
+        map.fitBounds(group.getBounds().pad(0.1));
+
+        // Marker'lara tıklama animasyonu
+        markers.forEach(marker => {
+            marker.on('click', function(e) {
+                // Tıklanan marker'ı büyüt
+                this.setIcon(L.divIcon({
+                    className: 'custom-marker',
+                    html: `<div style="
+                        background-color: ${dayColors[tourPoints[markers.indexOf(this)].day]};
+                        width: 35px;
+                        height: 35px;
+                        border-radius: 50%;
+                        border: 4px solid white;
+                        box-shadow: 0 5px 15px rgba(0,0,0,0.4);
+                        display: flex;
+                        align-items: center;
+                        justify-content: center;
+                        color: white;
+                        font-weight: bold;
+                        font-size: 14px;
+                        transform: scale(1.1);
+                        transition: all 0.3s ease;
+                    ">${markers.indexOf(this) + 1}</div>`,
+                    iconSize: [35, 35],
+                    iconAnchor: [17, 17],
+                    popupAnchor: [0, -17]
+                }));
+                
+                // 2 saniye sonra normal boyuta döndür
+                setTimeout(() => {
+                    this.setIcon(L.divIcon({
+                        className: 'custom-marker',
+                        html: `<div style="
+                            background-color: ${dayColors[tourPoints[markers.indexOf(this)].day]};
+                            width: 25px;
+                            height: 25px;
+                            border-radius: 50%;
+                            border: 3px solid white;
+                            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+                            display: flex;
+                            align-items: center;
+                            justify-content: center;
+                            color: white;
+                            font-weight: bold;
+                            font-size: 12px;
+                        ">${markers.indexOf(this) + 1}</div>`,
+                        iconSize: [25, 25],
+                        iconAnchor: [12, 12],
+                        popupAnchor: [0, -12]
+                    }));
+                }, 2000);
+            });
+        });
+    </script>
+</body>
+</html>
