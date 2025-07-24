@@ -1,6 +1,13 @@
 import streamlit as st
+import streamlit.components.v1 as components
 
-st.title("🎈 My new app")
-st.write(
-    "Let's start building! For help and inspiration, head over to [docs.streamlit.io](https://docs.streamlit.io/)."
-)
+# Başlık
+st.set_page_config(layout="wide")
+st.title("🗺️ Balkan Turu Haritası")
+
+# HTML dosyasını oku
+with open("balkan_turu.html", "r", encoding="utf-8") as file:
+    html_content = file.read()
+
+# HTML içeriğini göster
+components.html(html_content, height=800, scrolling=True)
